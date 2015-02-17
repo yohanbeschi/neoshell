@@ -1,0 +1,7 @@
+<users>
+  <user>
+    <username>notroot</username>
+    <fullname>My User</fullname>
+    <publickey>...</publickey>
+  </user>
+</users>
