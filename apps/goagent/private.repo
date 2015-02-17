@@ -1,0 +1,5 @@
+[private]
+name = My private repo
+enabled = 1
+baseurl = http://forge.aws.cpdev.local/centos-6/6.5/contrib/x86_64/
+gpgcheck = 0

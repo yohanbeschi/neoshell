@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="72">
+  <server artifactsdir="artifacts" commandRepositoryLocation="default" serverId="4ae479b0-fcdd-46a5-a548-e2d9d34196a6" />
+  <pipelines group="KissForge">
+    <pipeline name="Forge_Update">
+      <materials>
+        <git url="git@github:canalplus/KISS-Forge.git" dest="kiss-forge" autoUpdate="false" materialName="kiss-forge" />
+      </materials>
+      <stage name="Update_neoshell">
+        <jobs>
+          <job name="Update_neoshell">
+            <tasks>
+              <exec command="/usr/bin/python" workingdir="kiss-forge/scripts">
+                <arg>updateNeoShell.py</arg>
+                <runif status="passed" />
+              </exec>
+            </tasks>
+          </job>
+        </jobs>
+      </stage>
+    </pipeline>
+  </pipelines>
+  <pipelines group="KissBus">
+    <pipeline name="KissBus_CI" isLocked="false">
+      <materials>
+        <git url="git@github:canalplus/kissbus.git" dest="app" autoUpdate="false" materialName="kiss-bus" />
+        <git url="git@github:canalplus/KISS-Forge.git" dest="forge" autoUpdate="false" materialName="kiss-forge" />
+        <git url="git@github:canalplus/KISS-bus-devops.git" branch="yohan" dest="devops" autoUpdate="false" materialName="kiss-bus-devops" />
+      </materials>
+      <stage name="CreateBranch" cleanWorkingDir="true">
+        <jobs>
+          <job name="CreateBranch">
+            <tasks>
+              <exec command="/usr/local/bin/neoshell.py" workingdir="devops/scripts">
+                <arg>createBranch.py</arg>
+                <arg>execute</arg>
+                <arg>-e</arg>
+                <arg>bus-esb/pom.xml</arg>
+                <runif status="passed" />
+              </exec>
+            </tasks>
+            <artifacts>
+              <artifact src="devops/BUILDVERSION" dest="devops" />
+            </artifacts>
+          </job>
+        </jobs>
+      </stage>
+      <stage name="BuildReactor" cleanWorkingDir="true">
+        <jobs>
+          <job name="PrepareReactor">
+            <tasks>
+              <fetchartifact pipeline="KissBus_CI" stage="CreateBranch" job="CreateBranch" srcfile="devops/BUILDVERSION" dest="devops">
+                <runif status="passed" />
+              </fetchartifact>
+              <exec command="/usr/local/bin/neoshell.py" workingdir="devops/scripts">
+                <arg>switchBranch.py</arg>
+                <arg>execute</arg>
+                <runif status="passed" />
+              </exec>
+              <exec command="/usr/local/bin/neoshell.py" workingdir="devops/scripts">
+                <arg>prepareReactor.py</arg>
+                <arg>execute</arg>
+                <runif status="passed" />
+              </exec>
+              <exec command="mvn" workingdir="app/bus-reactor">
+                <arg>deploy</arg>
+                <runif status="passed" />
+              </exec>
+            </tasks>
+          </job>
+        </jobs>
+      </stage>
+    </pipeline>
+  </pipelines>
+  <agents>
+    <agent hostname="ip-172-23-1-148" ipaddress="172.23.1.148" uuid="c2167c1e-495d-4b29-9bb8-c2578842fed8" />
+  </agents>
+</cruise>
